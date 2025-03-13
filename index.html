@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Search Dropdown with API Data</title>
+    <style>
+        /* Container */
+        .search-container {
+            position: relative;
+            width: 300px;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Input Field */
+        #searchInput {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        /* Dropdown List */
+        .dropdown {
+            position: absolute;
+            width: 100%;
+            border: 1px solid #ccc;
+            background: white;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none;
+            z-index: 10;
+        }
+
+        /* Dropdown Items */
+        .dropdown div {
+            padding: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* Highlighted Selected Item */
+        .dropdown div.selected {
+            background: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Disabled Option */
+        .dropdown div.disabled {
+            background: #f0f0f0;
+            color: gray;
+            cursor: not-allowed;
+            font-weight: bold;
+        }
+
+        /* Hover Effect */
+        .dropdown div:not(.disabled):hover {
+            background: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search countries..." autocomplete="off">
+        <div class="dropdown" id="dropdown"></div>
+    </div>
+
+    <script>
+        const input = document.getElementById('searchInput');
+        const dropdown = document.getElementById('dropdown');
+        let countries = [];
+
+        // Fetch country data from the API
+        async function fetchCountryData() {
+            try {
+                const response = await fetch('https://demo.jetworkflow.com/ims/jetapi.php?method=getRecords&key=7jZB5WVYlEqKiIhdw9KGhUikCXmAWHCj&id_form=48&project=demoleo');
+                const data = await response.json();
+                countries = data.data.map(item => item.country);
+            } catch (error) {
+                console.error('Error fetching country data:', error);
+            }
+        }
+
+        // Function to populate the dropdown with filtered data
+        function updateDropdown(query = "") {
+            dropdown.innerHTML = "";
+            const filtered = countries.filter(country => country.toLowerCase().includes(query.toLowerCase()));
+
+            if (filtered.length > 0) {
+                filtered.forEach((country, index) => {
+                    const div = document.createElement("div");
+                    div.textContent = country;
+                    if (index === 0) div.classList.add("selected"); // First item highlighted
+                    div.addEventListener("click", () => {
+                        input.value = country;
+                        dropdown.style.display = "none";
+                    });
+                    dropdown.appendChild(div);
+                });
+            }
+
+            // Append "Pilih Barang" disabled option
+            const pilihBarang = document.createElement("div");
+            pilihBarang.textContent = "Pilih Country";
+            pilihBarang.classList.add("disabled");
+            dropdown.appendChild(pilihBarang);
+
+            dropdown.style.display = "block";
+        }
+
+        // Show all data on focus
+        input.addEventListener("focus", () => updateDropdown());
+
+        // Filter data while typing
+        input.addEventListener("input", () => updateDropdown(input.value));
+
+        // Hide dropdown when clicking outside
+        document.addEventListener("click", (e) => {
+            if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = "none";
+            }
+        });
+
+        // Fetch country data on page load
+        fetchCountryData();
+    </script>
+
+</body>
+</html>
