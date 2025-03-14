@@ -157,7 +157,7 @@
         // Fetch country data from Flask API
         async function fetchCountryData() {
             try {
-                const response = await fetch('http://127.0.0.1:5000/get-countries');
+                const response = await fetch('https://62cc7f4e-a3e8-4f49-83a3-48e59b9e62b0-00-3qgl35fvny1pr.pike.replit.dev/get-countries');
                 const data = await response.json();
                 if (!data.countries || !Array.isArray(data.countries)) {
                     console.error('Invalid response format:', data);
@@ -211,7 +211,7 @@
             }
 
             try {
-                const response = await fetch("http://127.0.0.1:5000/send-data", {
+                const response = await fetch("https://62cc7f4e-a3e8-4f49-83a3-48e59b9e62b0-00-3qgl35fvny1pr.pike.replit.dev/send-data", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ name, country })
