@@ -3,89 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Search Dropdown with API Data</title>
+    <title>Live Search & Send Data</title>
     <style>
-        /* Container */
-        .search-container {
-            position: relative;
-            width: 300px;
-            font-family: Arial, sans-serif;
-        }
-
-        /* Input Field */
-        #searchInput {
-            width: 100%;
-            padding: 8px;
-            font-size: 14px;
+        /* General Reset */
+        * {
             box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
         }
 
-        /* Dropdown List */
+        /* Centering the Form */
+        .container {
+            position: relative;
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        /* Input Fields */
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        /* Fix dropdown alignment inside the card */
         .dropdown {
             position: absolute;
-            width: 100%;
-            border: 1px solid #ccc;
+            width: 100%; /* Ensures the dropdown stays inside the input field */
+            left: 0;
             background: white;
-            max-height: 150px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            max-height: 200px;
             overflow-y: auto;
             display: none;
             z-index: 10;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
-        /* Dropdown Items */
+        /* Style dropdown items */
         .dropdown div {
-            padding: 8px;
+            padding: 10px;
             cursor: pointer;
             border-bottom: 1px solid #f0f0f0;
+            transition: 0.3s;
         }
 
-        /* Highlighted Selected Item */
-        .dropdown div.selected {
+        /* Hover effect */
+        .dropdown div:hover {
             background: #007bff;
             color: white;
-            font-weight: bold;
         }
 
-        /* Disabled Option */
-        .dropdown div.disabled {
-            background: #f0f0f0;
-            color: gray;
-            cursor: not-allowed;
-            font-weight: bold;
+        /* Submit Button */
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            border: none;
+            background: #007bff;
+            color: white;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
         }
 
-        /* Hover Effect */
-        .dropdown div:not(.disabled):hover {
-            background: #e0e0e0;
+        button:hover {
+            background: #0056b3;
+        }
+
+        /* Status Message */
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .container {
+                width: 90%;
+            }
+
+            input, button {
+                font-size: 14px;
+                padding: 10px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="search-container">
+    <div class="container">
+        <h2>Live Search & Send Data</h2>
+
+        <!-- Name Input -->
+        <input type="text" id="nameInput" placeholder="Enter your name" required>
+
+        <!-- Country Search Input -->
         <input type="text" id="searchInput" placeholder="Search countries..." autocomplete="off">
         <div class="dropdown" id="dropdown"></div>
+
+        <!-- Submit Button -->
+        <button onclick="sendData()">Send</button>
+
+        <!-- Status Message -->
+        <p id="statusMessage" class="status"></p>
     </div>
 
     <script>
         const input = document.getElementById('searchInput');
+        const nameInput = document.getElementById('nameInput');
         const dropdown = document.getElementById('dropdown');
+        const statusMessage = document.getElementById('statusMessage');
         let countries = [];
 
-        // Fetch country data from the API
+        // Fetch country data from Flask API
         async function fetchCountryData() {
             try {
-                const response = await fetch('https://demo.jetworkflow.com/ims/jetapi.php?method=getRecords&key=7jZB5WVYlEqKiIhdw9KGhUikCXmAWHCj&id_form=48&project=demoleo');
+                const response = await fetch('http://127.0.0.1:5000/get-countries');
                 const data = await response.json();
-                countries = data.data.map(item => item.country);
+                if (!data.countries || !Array.isArray(data.countries)) {
+                    console.error('Invalid response format:', data);
+                    return;
+                }
+                countries = data.countries;
             } catch (error) {
                 console.error('Error fetching country data:', error);
             }
         }
 
-        // Function to populate the dropdown with filtered data
+        // Populate dropdown with search results
         function updateDropdown(query = "") {
             dropdown.innerHTML = "";
             const filtered = countries.filter(country => country.toLowerCase().includes(query.toLowerCase()));
@@ -94,28 +178,18 @@
                 filtered.forEach((country, index) => {
                     const div = document.createElement("div");
                     div.textContent = country;
-                    if (index === 0) div.classList.add("selected"); // First item highlighted
                     div.addEventListener("click", () => {
                         input.value = country;
                         dropdown.style.display = "none";
                     });
                     dropdown.appendChild(div);
                 });
+                dropdown.style.display = "block";
             }
-
-            // Append "Pilih Barang" disabled option
-            const pilihBarang = document.createElement("div");
-            pilihBarang.textContent = "Pilih Country";
-            pilihBarang.classList.add("disabled");
-            dropdown.appendChild(pilihBarang);
-
-            dropdown.style.display = "block";
         }
 
-        // Show all data on focus
+        // Show dropdown on focus
         input.addEventListener("focus", () => updateDropdown());
-
-        // Filter data while typing
         input.addEventListener("input", () => updateDropdown(input.value));
 
         // Hide dropdown when clicking outside
@@ -125,7 +199,41 @@
             }
         });
 
-        // Fetch country data on page load
+        // Function to send data via Flask API
+        async function sendData() {
+            const name = nameInput.value.trim();
+            const country = input.value.trim();
+
+            if (!name || !country) {
+                statusMessage.textContent = "Please enter both name and country!";
+                statusMessage.className = "status error";
+                return;
+            }
+
+            try {
+                const response = await fetch("http://127.0.0.1:5000/send-data", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, country })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    statusMessage.textContent = data.message;
+                    statusMessage.className = "status success";
+                } else {
+                    statusMessage.textContent = "Failed to send data: " + (data.error || "Unknown error");
+                    statusMessage.className = "status error";
+                }
+            } catch (error) {
+                console.error("Error sending data:", error);
+                statusMessage.textContent = "An error occurred while sending data.";
+                statusMessage.className = "status error";
+            }
+        }
+
+        // Fetch countries on page load
         fetchCountryData();
     </script>
 
